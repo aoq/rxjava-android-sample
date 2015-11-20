@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+ * Copyright (c) 2015 Yu AOKI
+-->
+<resources>
+    <dimen name="activity_horizontal_margin">64dp</dimen>
+</resources>
