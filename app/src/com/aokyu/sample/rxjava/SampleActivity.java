@@ -20,7 +20,6 @@ import android.widget.ProgressBar;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.MalformedURLException;
 import java.net.URL;
 
 import butterknife.Bind;
@@ -65,57 +64,59 @@ public class SampleActivity extends AppCompatActivity {
                     @Override
                     public Bitmap call(String urlString) {
                         DebugLog.d("CALL : [" + Thread.currentThread().getName() + "]");
-                        URL url = null;
                         InputStream stream = null;
                         Bitmap bitmap = null;
                         try {
-                            url = new URL(urlString);
+                            URL url = new URL(urlString);
                             stream = url.openStream();
                             bitmap = BitmapFactory.decodeStream(stream);
-                            stream.close();
-                        } catch (MalformedURLException e) {
-                            throw OnErrorThrowable.from(e);
                         } catch (IOException e) {
                             throw OnErrorThrowable.from(e);
-                        }
-                        return bitmap;
-                    }
-                })
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(new Subscriber<Bitmap>() {
+                        } finally {
+                            try {
+                                if (stream != null) {
+                                    stream.close();
+                                }
+                            } catch (IOException e) {
+                                throw OnErrorThrowable.from(e);
+                            }
 
-                    @Override
-                    public void onStart() {
-                        mProgressView.setVisibility(View.VISIBLE);
-                        mImageView.setVisibility(View.GONE);
+                        } return bitmap;
                     }
+                }).observeOn(AndroidSchedulers.mainThread()).subscribe(new Subscriber<Bitmap>() {
 
-                    @Override
-                    public void onNext(Bitmap bitmap) {
-                        DebugLog.d("NEXT : [" + Thread.currentThread().getName() + "]");
-                        Bitmap old = mBitmap;
-                        mBitmap = bitmap;
-                        if (old != null) {
-                            old.recycle();
-                        }
-                    }
+            @Override
+            public void onStart() {
+                mProgressView.setVisibility(View.VISIBLE);
+                mImageView.setVisibility(View.GONE);
+            }
 
-                    @Override
-                    public void onCompleted() {
-                        DebugLog.d("COMPLETED : [" + Thread.currentThread().getName() + "]");
-                        mImageView.setImageBitmap(mBitmap);
-                        mProgressView.setVisibility(View.GONE);
-                        mImageView.setVisibility(View.VISIBLE);
-                    }
+            @Override
+            public void onNext(Bitmap bitmap) {
+                DebugLog.d("NEXT : [" + Thread.currentThread().getName() + "]");
+                Bitmap old = mBitmap;
+                mBitmap = bitmap;
+                if (old != null) {
+                    old.recycle();
+                }
+            }
 
-                    @Override
-                    public void onError(Throwable e) {
-                        DebugLog.d("ERROR : [" + Thread.currentThread().getName() + "]");
-                        mImageView.setImageBitmap(null);
-                        mProgressView.setVisibility(View.GONE);
-                        mImageView.setVisibility(View.VISIBLE);
-                    }
-                });
+            @Override
+            public void onCompleted() {
+                DebugLog.d("COMPLETED : [" + Thread.currentThread().getName() + "]");
+                mImageView.setImageBitmap(mBitmap);
+                mProgressView.setVisibility(View.GONE);
+                mImageView.setVisibility(View.VISIBLE);
+            }
+
+            @Override
+            public void onError(Throwable e) {
+                DebugLog.d("ERROR : [" + Thread.currentThread().getName() + "]");
+                mImageView.setImageBitmap(null);
+                mProgressView.setVisibility(View.GONE);
+                mImageView.setVisibility(View.VISIBLE);
+            }
+        });
     }
 
     protected void onDestroy() {
